@@ -362,7 +362,7 @@ double MIPGen::CalculateFrameStats(float* pTimeStep)
 			windowText << L"One-pass compute";
 		}
 
-		windowText << L"    [UP/DOWN] MIP-level: " << m_mipLevel;
+		windowText << L"    [\x2191][\x2193] MIP-level: " << m_mipLevel;
 
 		SetCustomWindowText(windowText.str().c_str());
 	}
