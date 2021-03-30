@@ -56,7 +56,7 @@ bool MipGenerator::Init(CommandList* pCommandList,  vector<Resource>& uploaders,
 	// Create resources and pipelines
 	m_imageSize.x = static_cast<uint32_t>(m_source->GetResource()->GetDesc().Width);
 	m_imageSize.y = m_source->GetResource()->GetDesc().Height;
-	const auto numMips = (max)(Log2((max)(m_imageSize.x, m_imageSize.y)), 0ui8) + 1u;
+	const uint8_t numMips = max<uint8_t>(Log2((max)(m_imageSize.x, m_imageSize.y)), 0) + 1;
 
 	m_counter = TypedBuffer::MakeUnique();
 	N_RETURN(m_counter->Create(m_device, 1, sizeof(uint32_t), Format::R32_FLOAT,
@@ -239,7 +239,7 @@ bool MipGenerator::createDescriptorTables()
 
 	// Get UAVs for resampling
 	m_uavTables[UAV_TABLE_TYPED].resize(numMips);
-	for (auto i = 0ui8; i < numMips; ++i)
+	for (uint8_t i = 0; i < numMips; ++i)
 	{
 		// Get UAV
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
@@ -250,7 +250,7 @@ bool MipGenerator::createDescriptorTables()
 	if (!m_typedUAV)
 	{
 		m_uavTables[UAV_TABLE_PACKED].resize(numMips);
-		for (auto i = 0ui8; i < numMips; ++i)
+		for (uint8_t i = 0; i < numMips; ++i)
 		{
 			// Get UAV
 			const auto descriptorTable = Util::DescriptorTable::MakeUnique();
@@ -261,7 +261,7 @@ bool MipGenerator::createDescriptorTables()
 
 	// Get SRVs for resampling
 	m_srvTables.resize(numMips);
-	for (auto i = 0ui8; i < numMips; ++i)
+	for (uint8_t i = 0; i < numMips; ++i)
 	{
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 		descriptorTable->SetDescriptors(0, 1, &m_mipmaps->GetSRVLevel(i));
