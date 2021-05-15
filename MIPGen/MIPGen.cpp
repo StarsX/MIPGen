@@ -19,7 +19,7 @@ MIPGen::MIPGen(uint32_t width, uint32_t height, wstring name) :
 	m_typedUAV(false),
 	m_mipLevel(0),
 	m_frameIndex(0),
-	m_pipelineType(MipGenerator::ONE_PASS),
+	m_pipelineType(MipGenerator::SINGLE_PASS),
 	m_showFPS(true),
 	m_fileName(L"Sashimi.dds")
 {

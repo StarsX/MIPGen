@@ -14,7 +14,7 @@ public:
 	{
 		GRAPHICS,
 		COMPUTE,
-		ONE_PASS,
+		SINGLE_PASS,
 
 		NUM_PIPE_TYPE
 	};
@@ -36,7 +36,7 @@ protected:
 	{
 		RESAMPLE_GRAPHICS,
 		RESAMPLE_COMPUTE,
-		ONE_PASS_MIPGEN,
+		SINGLE_PASS_MIPGEN,
 
 		NUM_PIPELINE
 	};
@@ -57,7 +57,7 @@ protected:
 		XUSG::ResourceBarrier* pBarriers, XUSG::ResourceState dstState);
 	uint32_t generateMipsCompute(const XUSG::CommandList* pCommandList,
 		XUSG::ResourceBarrier* pBarriers , XUSG::ResourceState dstState);
-	uint32_t generateMipsOnePass(const XUSG::CommandList* pCommandList,
+	uint32_t generateMipsSinglePass(const XUSG::CommandList* pCommandList,
 		XUSG::ResourceBarrier* pBarriers, XUSG::ResourceState dstState);
 
 	XUSG::Device m_device;

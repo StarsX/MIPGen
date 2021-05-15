@@ -107,8 +107,8 @@ void MipGenerator::Process(const CommandList* pCommandList, ResourceState dstSta
 	case COMPUTE:
 		m_numBarriers = generateMipsCompute(pCommandList, m_barriers, dstState);
 		break;
-	case ONE_PASS:
-		m_numBarriers = generateMipsOnePass(pCommandList, m_barriers, dstState);
+	case SINGLE_PASS:
+		m_numBarriers = generateMipsSinglePass(pCommandList, m_barriers, dstState);
 		break;
 	default:
 		m_numBarriers = generateMipsGraphics(pCommandList, m_barriers, dstState);
@@ -173,7 +173,7 @@ bool MipGenerator::createPipelineLayouts()
 		utilPipelineLayout->SetConstants(0, SizeOfInUint32(uint32_t[2]), 0);
 		utilPipelineLayout->SetRange(1, DescriptorType::UAV, 1, 0, 0, DescriptorFlag::DATA_STATIC_WHILE_SET_AT_EXECUTE);
 		utilPipelineLayout->SetRange(2, DescriptorType::UAV, m_mipmaps->GetNumMips(), 1, 0, DescriptorFlag::DATA_STATIC_WHILE_SET_AT_EXECUTE);
-		X_RETURN(m_pipelineLayouts[ONE_PASS_MIPGEN], utilPipelineLayout->GetPipelineLayout(
+		X_RETURN(m_pipelineLayouts[SINGLE_PASS_MIPGEN], utilPipelineLayout->GetPipelineLayout(
 			*m_pipelineLayoutCache, PipelineLayoutFlag::NONE, L"OnePassMIPGenLayout"), false);
 	}
 
@@ -217,9 +217,9 @@ bool MipGenerator::createPipelines(Format rtFormat)
 		N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, m_typedUAV ? L"CSGenerateMips.cso" : L"CSGenMipsPacked.cso"), false);
 
 		const auto state = Compute::State::MakeUnique();
-		state->SetPipelineLayout(m_pipelineLayouts[ONE_PASS_MIPGEN]);
+		state->SetPipelineLayout(m_pipelineLayouts[SINGLE_PASS_MIPGEN]);
 		state->SetShader(m_shaderPool->GetShader(Shader::Stage::CS, csIndex++));
-		X_RETURN(m_pipelines[ONE_PASS_MIPGEN], state->GetPipeline(*m_computePipelineCache, L"OnePassMIPGen"), false);
+		X_RETURN(m_pipelines[SINGLE_PASS_MIPGEN], state->GetPipeline(*m_computePipelineCache, L"OnePassMIPGen"), false);
 	}
 
 	return true;
@@ -303,7 +303,7 @@ uint32_t MipGenerator::generateMipsCompute(const CommandList* pCommandList,
 		&m_uavTables[UAV_TABLE_TYPED][1], 1, m_samplerTable, 0, 0, &m_srvTables[0], 2);
 }
 
-uint32_t MipGenerator::generateMipsOnePass(const CommandList* pCommandList,
+uint32_t MipGenerator::generateMipsSinglePass(const CommandList* pCommandList,
 	ResourceBarrier* pBarriers, ResourceState dstState)
 {
 	const auto groupCountX = DIV_UP(m_mipmaps->GetWidth(), 32);
@@ -314,13 +314,13 @@ uint32_t MipGenerator::generateMipsOnePass(const CommandList* pCommandList,
 	pCommandList->ClearUnorderedAccessViewUint(m_uavTable,
 		m_counter->GetUAV(), m_counter->GetResource(), clear);
 
-	pCommandList->SetComputePipelineLayout(m_pipelineLayouts[ONE_PASS_MIPGEN]);
+	pCommandList->SetComputePipelineLayout(m_pipelineLayouts[SINGLE_PASS_MIPGEN]);
 	pCommandList->SetCompute32BitConstant(0, m_mipmaps->GetNumMips());
 	pCommandList->SetCompute32BitConstant(0, groupCountX * groupCountY, SizeOfInUint32(uint32_t));
 	pCommandList->SetComputeDescriptorTable(1, m_uavTable);
 	pCommandList->SetComputeDescriptorTable(2, m_uavTables[m_typedUAV ? UAV_TABLE_TYPED : UAV_TABLE_PACKED][0]);
 
-	pCommandList->SetPipelineState(m_pipelines[ONE_PASS_MIPGEN]);
+	pCommandList->SetPipelineState(m_pipelines[SINGLE_PASS_MIPGEN]);
 
 	// Auto promotion to UNORDERED_ACCESS
 	m_mipmaps->SetBarrier(m_barriers, ResourceState::UNORDERED_ACCESS);
