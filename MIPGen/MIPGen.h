@@ -40,11 +40,11 @@ public:
 private:
 	static const uint8_t FrameCount = 3;
 
-	XUSG::SwapChain				m_swapChain;
-	XUSG::CommandAllocator		m_commandAllocators[FrameCount];
-	XUSG::CommandQueue			m_commandQueue;
+	XUSG::SwapChain::uptr			m_swapChain;
+	XUSG::CommandAllocator::uptr	m_commandAllocators[FrameCount];
+	XUSG::CommandQueue::uptr		m_commandQueue;
 
-	XUSG::Device				m_device;
+	XUSG::Device::sptr				m_device;
 	XUSG::RenderTarget::uptr	m_renderTargets[FrameCount];
 	XUSG::CommandList::uptr		m_commandList;
 
@@ -59,7 +59,7 @@ private:
 	// Synchronization objects.
 	uint32_t	m_frameIndex;
 	HANDLE		m_fenceEvent;
-	XUSG::Fence	m_fence;
+	XUSG::Fence::uptr m_fence;
 	uint64_t	m_fenceValues[FrameCount];
 
 	// Application state
@@ -71,7 +71,7 @@ private:
 	// User external settings
 	std::wstring m_fileName;
 
-	void LoadPipeline(std::vector<XUSG::Resource>& uploaders);
+	void LoadPipeline(std::vector<XUSG::Resource::uptr>& uploaders);
 	void LoadAssets();
 
 	void PopulateCommandList();

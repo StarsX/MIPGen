@@ -19,10 +19,10 @@ public:
 		NUM_PIPE_TYPE
 	};
 
-	MipGenerator(const XUSG::Device& device);
+	MipGenerator(const XUSG::Device::sptr& device);
 	virtual ~MipGenerator();
 
-	bool Init(XUSG::CommandList* pCommandList, std::vector<XUSG::Resource>& uploaders,
+	bool Init(XUSG::CommandList* pCommandList, std::vector<XUSG::Resource::uptr>& uploaders,
 		XUSG::Format rtFormat, const wchar_t* fileName, bool typedUAV);
 
 	void Process(const XUSG::CommandList* pCommandList, XUSG::ResourceState dstState, PipelineType pipelineType);
@@ -60,7 +60,7 @@ protected:
 	uint32_t generateMipsSinglePass(const XUSG::CommandList* pCommandList,
 		XUSG::ResourceBarrier* pBarriers, XUSG::ResourceState dstState);
 
-	XUSG::Device m_device;
+	XUSG::Device::sptr m_device;
 
 	XUSG::ShaderPool::uptr				m_shaderPool;
 	XUSG::Graphics::PipelineCache::uptr	m_graphicsPipelineCache;
@@ -77,7 +77,7 @@ protected:
 	XUSG::DescriptorTable				m_srvTable;
 	XUSG::DescriptorTable				m_samplerTable;
 
-	std::shared_ptr<XUSG::ResourceBase>	m_source;
+	XUSG::ShaderResource::sptr			m_source;
 	XUSG::TypedBuffer::uptr				m_counter;
 	XUSG::RenderTarget::uptr			m_mipmaps;
 
