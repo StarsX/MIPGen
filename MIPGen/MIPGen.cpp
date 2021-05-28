@@ -209,7 +209,7 @@ void MIPGen::OnRender()
 	PopulateCommandList();
 
 	// Execute the command list.
-	m_commandQueue->SubmitCommandList(m_commandList.get());
+	m_commandQueue->ExecuteCommandList(m_commandList.get());
 
 	// Present the frame.
 	N_RETURN(m_swapChain->Present(0, 0), ThrowIfFailed(E_FAIL));
