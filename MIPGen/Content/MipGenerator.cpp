@@ -13,16 +13,6 @@ using namespace std;
 using namespace DirectX;
 using namespace XUSG;
 
-struct GaussianConstants
-{
-	struct Immutable
-	{
-		XMFLOAT2	Focus;
-		float		Sigma;
-	} Imm;
-	uint32_t Level;
-};
-
 MipGenerator::MipGenerator(const Device::sptr& device) :
 	m_device(device),
 	m_imageSize(1, 1)
