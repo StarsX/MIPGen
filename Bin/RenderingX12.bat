@@ -1,1 +1,1 @@
-start MIPGen.exe -image RenderingX12.dds
+start MIPGen.exe -image Assets/RenderingX12.dds

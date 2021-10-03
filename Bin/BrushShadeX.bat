@@ -1,1 +1,1 @@
-start MIPGen.exe -image BrushShadeX.dds
+start MIPGen.exe -image Assets/BrushShadeX.dds

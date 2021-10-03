@@ -51,12 +51,14 @@ bool MipGenerator::Init(CommandList* pCommandList,  vector<Resource::uptr>& uplo
 	m_counter = TypedBuffer::MakeUnique();
 	N_RETURN(m_counter->Create(m_device.get(), 1, sizeof(uint32_t), Format::R32_UINT,
 		ResourceFlag::ALLOW_UNORDERED_ACCESS | ResourceFlag::DENY_SHADER_RESOURCE,
-		MemoryType::DEFAULT, 0, nullptr, 1, nullptr, L"GlobalBarrierCounter"), false);
+		MemoryType::DEFAULT, 0, nullptr, 1, nullptr, MemoryFlag::NONE,
+		L"GlobalBarrierCounter"), false);
 
 	m_mipmaps = RenderTarget::MakeUnique();
 	N_RETURN(m_mipmaps->Create(m_device.get(), m_imageSize.x, m_imageSize.y, rtFormat, 1, (typedUAV ?
 		ResourceFlag::ALLOW_UNORDERED_ACCESS : ResourceFlag::NEED_PACKED_UAV ) |
-		ResourceFlag::ALLOW_SIMULTANEOUS_ACCESS, numMips, 1, nullptr, false, L"MipMap"), false);
+		ResourceFlag::ALLOW_SIMULTANEOUS_ACCESS, numMips, 1, nullptr, false,
+		MemoryFlag::NONE, L"MipMap"), false);
 
 	N_RETURN(createPipelineLayouts(), false);
 	N_RETURN(createPipelines(rtFormat), false);
