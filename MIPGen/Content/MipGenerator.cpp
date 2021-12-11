@@ -77,14 +77,14 @@ bool MipGenerator::Init(CommandList* pCommandList,  vector<Resource::uptr>& uplo
 		m_mipmaps->SetBarrier(m_barriers, ResourceState::UNORDERED_ACCESS);
 
 		pCommandList->SetComputePipelineLayout(m_pipelineLayouts[RESAMPLE_COMPUTE]);
-		m_mipmaps->AsTexture2D()->Blit(pCommandList, 8, 8, 1, m_uavTables[UAV_TABLE_TYPED][0], 1,
+		m_mipmaps->AsTexture()->Blit(pCommandList, 8, 8, 1, m_uavTables[UAV_TABLE_TYPED][0], 1,
 			0, m_srvTable, 2, m_samplerTable, 0, m_pipelines[RESAMPLE_COMPUTE]);
 	}
 
 	return true;
 }
 
-void MipGenerator::Process(const CommandList* pCommandList, ResourceState dstState, PipelineType pipelineType)
+void MipGenerator::Process(CommandList* pCommandList, ResourceState dstState, PipelineType pipelineType)
 {
 	// Set Descriptor pools
 	const DescriptorPool descriptorPools[] =
@@ -107,7 +107,7 @@ void MipGenerator::Process(const CommandList* pCommandList, ResourceState dstSta
 	}
 }
 
-void MipGenerator::Visualize(const CommandList* pCommandList, RenderTarget::uptr& renderTarget, uint32_t mipLevel)
+void MipGenerator::Visualize(CommandList* pCommandList, RenderTarget::uptr& renderTarget, uint32_t mipLevel)
 {
 	// Set Descriptor pools
 	const DescriptorPool descriptorPools[] =
@@ -276,7 +276,7 @@ bool MipGenerator::createDescriptorTables()
 	return true;
 }
 
-uint32_t MipGenerator::generateMipsGraphics(const CommandList* pCommandList,
+uint32_t MipGenerator::generateMipsGraphics(CommandList* pCommandList,
 	ResourceBarrier* pBarriers, ResourceState dstState)
 {
 	// Generate mipmaps
@@ -285,17 +285,17 @@ uint32_t MipGenerator::generateMipsGraphics(const CommandList* pCommandList,
 		m_pipelines[RESAMPLE_GRAPHICS], m_srvTables.data(), 1, m_samplerTable, 0);
 }
 
-uint32_t MipGenerator::generateMipsCompute(const CommandList* pCommandList,
+uint32_t MipGenerator::generateMipsCompute(CommandList* pCommandList,
 	ResourceBarrier* pBarriers, ResourceState dstState)
 {
 	// Generate mipmaps
-	return m_mipmaps->AsTexture2D()->GenerateMips(pCommandList, pBarriers, 8, 8, 1,
+	return m_mipmaps->AsTexture()->GenerateMips(pCommandList, pBarriers, 8, 8, 1,
 		ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::NON_PIXEL_SHADER_RESOURCE,
 		m_pipelineLayouts[RESAMPLE_COMPUTE], m_pipelines[RESAMPLE_COMPUTE],
 		&m_uavTables[UAV_TABLE_TYPED][1], 1, m_samplerTable, 0, 0, &m_srvTables[0], 2);
 }
 
-uint32_t MipGenerator::generateMipsSinglePass(const CommandList* pCommandList,
+uint32_t MipGenerator::generateMipsSinglePass(CommandList* pCommandList,
 	ResourceBarrier* pBarriers, ResourceState dstState)
 {
 	const auto groupCountX = DIV_UP(m_mipmaps->GetWidth(), 32);

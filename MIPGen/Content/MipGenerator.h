@@ -25,8 +25,8 @@ public:
 	bool Init(XUSG::CommandList* pCommandList, std::vector<XUSG::Resource::uptr>& uploaders,
 		XUSG::Format rtFormat, const wchar_t* fileName, bool typedUAV);
 
-	void Process(const XUSG::CommandList* pCommandList, XUSG::ResourceState dstState, PipelineType pipelineType);
-	void Visualize(const XUSG::CommandList* pCommandList, XUSG::RenderTarget::uptr& renderTarget, uint32_t mipLevel);
+	void Process(XUSG::CommandList* pCommandList, XUSG::ResourceState dstState, PipelineType pipelineType);
+	void Visualize(XUSG::CommandList* pCommandList, XUSG::RenderTarget::uptr& renderTarget, uint32_t mipLevel);
 
 	uint32_t GetMipLevelCount() const;
 	void GetImageSize(uint32_t& width, uint32_t& height) const;
@@ -53,11 +53,11 @@ protected:
 	bool createPipelines(XUSG::Format rtFormat);
 	bool createDescriptorTables();
 
-	uint32_t generateMipsGraphics(const XUSG::CommandList* pCommandList,
+	uint32_t generateMipsGraphics(XUSG::CommandList* pCommandList,
 		XUSG::ResourceBarrier* pBarriers, XUSG::ResourceState dstState);
-	uint32_t generateMipsCompute(const XUSG::CommandList* pCommandList,
+	uint32_t generateMipsCompute(XUSG::CommandList* pCommandList,
 		XUSG::ResourceBarrier* pBarriers , XUSG::ResourceState dstState);
-	uint32_t generateMipsSinglePass(const XUSG::CommandList* pCommandList,
+	uint32_t generateMipsSinglePass(XUSG::CommandList* pCommandList,
 		XUSG::ResourceBarrier* pBarriers, XUSG::ResourceState dstState);
 
 	XUSG::Device::sptr m_device;
@@ -77,7 +77,7 @@ protected:
 	XUSG::DescriptorTable				m_srvTable;
 	XUSG::DescriptorTable				m_samplerTable;
 
-	XUSG::ShaderResource::sptr			m_source;
+	XUSG::Texture::sptr					m_source;
 	XUSG::TypedBuffer::uptr				m_counter;
 	XUSG::RenderTarget::uptr			m_mipmaps;
 
