@@ -7,8 +7,6 @@
 #include "Advanced/XUSGDDSLoader.h"
 #undef _INDEPENDENT_DDS_LOADER_
 
-#define SizeOfInUint32(obj)	DIV_UP(sizeof(obj), sizeof(uint32_t))
-
 using namespace std;
 using namespace DirectX;
 using namespace XUSG;
@@ -44,8 +42,8 @@ bool MipGenerator::Init(CommandList* pCommandList,  vector<Resource::uptr>& uplo
 	}
 
 	// Create resources and pipelines
-	m_imageSize.x = m_source->GetWidth();
-	m_imageSize.y = dynamic_pointer_cast<Texture2D, ShaderResource>(m_source)->GetHeight();
+	m_imageSize.x = static_cast<uint32_t>(m_source->GetWidth());
+	m_imageSize.y = m_source->GetHeight();
 	const uint8_t numMips = max<uint8_t>(Log2((max)(m_imageSize.x, m_imageSize.y)), 0) + 1;
 
 	m_counter = TypedBuffer::MakeUnique();
@@ -298,7 +296,7 @@ uint32_t MipGenerator::generateMipsCompute(CommandList* pCommandList,
 uint32_t MipGenerator::generateMipsSinglePass(CommandList* pCommandList,
 	ResourceBarrier* pBarriers, ResourceState dstState)
 {
-	const auto groupCountX = DIV_UP(m_mipmaps->GetWidth(), 32);
+	const auto groupCountX = DIV_UP(static_cast<uint32_t>(m_mipmaps->GetWidth()), 32);
 	const auto groupCountY = DIV_UP(m_mipmaps->GetHeight(), 32);
 
 	// Clear counter
