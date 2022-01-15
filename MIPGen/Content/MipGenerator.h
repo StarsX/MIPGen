@@ -19,7 +19,7 @@ public:
 		NUM_PIPE_TYPE
 	};
 
-	MipGenerator(const XUSG::Device::sptr& device);
+	MipGenerator();
 	virtual ~MipGenerator();
 
 	bool Init(XUSG::CommandList* pCommandList, std::vector<XUSG::Resource::uptr>& uploaders,
@@ -59,8 +59,6 @@ protected:
 		XUSG::ResourceBarrier* pBarriers , XUSG::ResourceState dstState);
 	uint32_t generateMipsSinglePass(XUSG::CommandList* pCommandList,
 		XUSG::ResourceBarrier* pBarriers, XUSG::ResourceState dstState);
-
-	XUSG::Device::sptr m_device;
 
 	XUSG::ShaderPool::uptr				m_shaderPool;
 	XUSG::Graphics::PipelineCache::uptr	m_graphicsPipelineCache;

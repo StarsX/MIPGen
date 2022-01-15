@@ -11,15 +11,10 @@ using namespace std;
 using namespace DirectX;
 using namespace XUSG;
 
-MipGenerator::MipGenerator(const Device::sptr& device) :
-	m_device(device),
+MipGenerator::MipGenerator() :
 	m_imageSize(1, 1)
 {
 	m_shaderPool = ShaderPool::MakeUnique();
-	m_graphicsPipelineCache = Graphics::PipelineCache::MakeUnique(device.get());
-	m_computePipelineCache = Compute::PipelineCache::MakeUnique(device.get());
-	m_descriptorTableCache = DescriptorTableCache::MakeUnique(device.get());
-	m_pipelineLayoutCache = PipelineLayoutCache::MakeUnique(device.get());
 }
 
 MipGenerator::~MipGenerator()
@@ -29,6 +24,12 @@ MipGenerator::~MipGenerator()
 bool MipGenerator::Init(CommandList* pCommandList,  vector<Resource::uptr>& uploaders,
 	Format rtFormat, const wchar_t* fileName, bool typedUAV)
 {
+	const auto pDevice = pCommandList->GetDevice();
+	m_graphicsPipelineCache = Graphics::PipelineCache::MakeUnique(pDevice);
+	m_computePipelineCache = Compute::PipelineCache::MakeUnique(pDevice);
+	m_descriptorTableCache = DescriptorTableCache::MakeUnique(pDevice);
+	m_pipelineLayoutCache = PipelineLayoutCache::MakeUnique(pDevice);
+
 	m_typedUAV = typedUAV;
 
 	// Load input image
@@ -37,7 +38,7 @@ bool MipGenerator::Init(CommandList* pCommandList,  vector<Resource::uptr>& uplo
 		DDS::AlphaMode alphaMode;
 
 		uploaders.emplace_back(Resource::MakeUnique());
-		N_RETURN(textureLoader.CreateTextureFromFile(m_device.get(), pCommandList, fileName,
+		N_RETURN(textureLoader.CreateTextureFromFile(pCommandList, fileName,
 			8192, false, m_source, uploaders.back().get(), &alphaMode), false);
 	}
 
@@ -47,13 +48,13 @@ bool MipGenerator::Init(CommandList* pCommandList,  vector<Resource::uptr>& uplo
 	const uint8_t numMips = max<uint8_t>(Log2((max)(m_imageSize.x, m_imageSize.y)), 0) + 1;
 
 	m_counter = TypedBuffer::MakeUnique();
-	N_RETURN(m_counter->Create(m_device.get(), 1, sizeof(uint32_t), Format::R32_UINT,
+	N_RETURN(m_counter->Create(pDevice, 1, sizeof(uint32_t), Format::R32_UINT,
 		ResourceFlag::ALLOW_UNORDERED_ACCESS | ResourceFlag::DENY_SHADER_RESOURCE,
 		MemoryType::DEFAULT, 0, nullptr, 1, nullptr, MemoryFlag::NONE,
 		L"GlobalBarrierCounter"), false);
 
 	m_mipmaps = RenderTarget::MakeUnique();
-	N_RETURN(m_mipmaps->Create(m_device.get(), m_imageSize.x, m_imageSize.y, rtFormat, 1, (typedUAV ?
+	N_RETURN(m_mipmaps->Create(pDevice, m_imageSize.x, m_imageSize.y, rtFormat, 1, (typedUAV ?
 		ResourceFlag::ALLOW_UNORDERED_ACCESS : ResourceFlag::NEED_PACKED_UAV ) |
 		ResourceFlag::ALLOW_SIMULTANEOUS_ACCESS, numMips, 1, nullptr, false,
 		MemoryFlag::NONE, L"MipMap"), false);

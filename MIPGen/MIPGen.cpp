@@ -79,7 +79,7 @@ void MIPGen::LoadPipeline(vector<Resource::uptr>& uploaders)
 		dxgiAdapter = nullptr;
 		ThrowIfFailed(factory->EnumAdapters1(i, &dxgiAdapter));
 
-		m_device = Device::MakeShared();
+		m_device = Device::MakeUnique();
 		hr = m_device->Create(dxgiAdapter.get(), D3D_FEATURE_LEVEL_11_0);
 	}
 
@@ -127,7 +127,7 @@ void MIPGen::LoadPipeline(vector<Resource::uptr>& uploaders)
 	N_RETURN(pCommandList->Create(m_device.get(), 0, CommandListType::DIRECT,
 		m_commandAllocators[m_frameIndex].get(), nullptr), ThrowIfFailed(E_FAIL));
 
-	m_mipGenerator = make_unique<MipGenerator>(m_device);
+	m_mipGenerator = make_unique<MipGenerator>();
 	if (!m_mipGenerator) ThrowIfFailed(E_FAIL);
 
 	if (!m_mipGenerator->Init(pCommandList, uploaders, Format::B8G8R8A8_UNORM, m_fileName.c_str(), m_typedUAV))
