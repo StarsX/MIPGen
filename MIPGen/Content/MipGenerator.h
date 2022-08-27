@@ -22,8 +22,8 @@ public:
 	MipGenerator();
 	virtual ~MipGenerator();
 
-	bool Init(XUSG::CommandList* pCommandList, std::vector<XUSG::Resource::uptr>& uploaders,
-		XUSG::Format rtFormat, const wchar_t* fileName, bool typedUAV);
+	bool Init(XUSG::CommandList* pCommandList, const XUSG::DescriptorTableCache::sptr& descriptorTableCache,
+		std::vector<XUSG::Resource::uptr>& uploaders, XUSG::Format rtFormat, const wchar_t* fileName, bool typedUAV);
 
 	void Process(XUSG::CommandList* pCommandList, XUSG::ResourceState dstState, PipelineType pipelineType);
 	void Visualize(XUSG::CommandList* pCommandList, XUSG::RenderTarget::uptr& renderTarget, uint32_t mipLevel);
@@ -64,7 +64,7 @@ protected:
 	XUSG::Graphics::PipelineCache::uptr	m_graphicsPipelineCache;
 	XUSG::Compute::PipelineCache::uptr	m_computePipelineCache;
 	XUSG::PipelineLayoutCache::uptr		m_pipelineLayoutCache;
-	XUSG::DescriptorTableCache::uptr	m_descriptorTableCache;
+	XUSG::DescriptorTableCache::sptr	m_descriptorTableCache;
 
 	XUSG::PipelineLayout	m_pipelineLayouts[NUM_PIPELINE];
 	XUSG::Pipeline			m_pipelines[NUM_PIPELINE];

@@ -21,14 +21,14 @@ MipGenerator::~MipGenerator()
 {
 }
 
-bool MipGenerator::Init(CommandList* pCommandList,  vector<Resource::uptr>& uploaders,
-	Format rtFormat, const wchar_t* fileName, bool typedUAV)
+bool MipGenerator::Init(CommandList* pCommandList, const DescriptorTableCache::sptr& descriptorTableCache,
+	vector<Resource::uptr>& uploaders, Format rtFormat, const wchar_t* fileName, bool typedUAV)
 {
 	const auto pDevice = pCommandList->GetDevice();
 	m_graphicsPipelineCache = Graphics::PipelineCache::MakeUnique(pDevice);
 	m_computePipelineCache = Compute::PipelineCache::MakeUnique(pDevice);
-	m_descriptorTableCache = DescriptorTableCache::MakeUnique(pDevice);
 	m_pipelineLayoutCache = PipelineLayoutCache::MakeUnique(pDevice);
+	m_descriptorTableCache = descriptorTableCache;
 
 	m_typedUAV = typedUAV;
 
@@ -64,7 +64,7 @@ bool MipGenerator::Init(CommandList* pCommandList,  vector<Resource::uptr>& uplo
 	XUSG_N_RETURN(createDescriptorTables(), false);
 
 	{
-		// Set Descriptor pools
+		// Set the descriptor pools
 		const DescriptorPool descriptorPools[] =
 		{
 			m_descriptorTableCache->GetDescriptorPool(CBV_SRV_UAV_POOL),
@@ -85,14 +85,6 @@ bool MipGenerator::Init(CommandList* pCommandList,  vector<Resource::uptr>& uplo
 
 void MipGenerator::Process(CommandList* pCommandList, ResourceState dstState, PipelineType pipelineType)
 {
-	// Set Descriptor pools
-	const DescriptorPool descriptorPools[] =
-	{
-		m_descriptorTableCache->GetDescriptorPool(CBV_SRV_UAV_POOL),
-		m_descriptorTableCache->GetDescriptorPool(SAMPLER_POOL)
-	};
-	pCommandList->SetDescriptorPools(static_cast<uint32_t>(size(descriptorPools)), descriptorPools);
-
 	switch (pipelineType)
 	{
 	case COMPUTE:
@@ -108,14 +100,6 @@ void MipGenerator::Process(CommandList* pCommandList, ResourceState dstState, Pi
 
 void MipGenerator::Visualize(CommandList* pCommandList, RenderTarget::uptr& renderTarget, uint32_t mipLevel)
 {
-	// Set Descriptor pools
-	const DescriptorPool descriptorPools[] =
-	{
-		m_descriptorTableCache->GetDescriptorPool(CBV_SRV_UAV_POOL),
-		m_descriptorTableCache->GetDescriptorPool(SAMPLER_POOL)
-	};
-	pCommandList->SetDescriptorPools(static_cast<uint32_t>(size(descriptorPools)), descriptorPools);
-
 	m_numBarriers = renderTarget->SetBarrier(m_barriers, ResourceState::RENDER_TARGET, m_numBarriers);
 	pCommandList->Barrier(m_numBarriers, m_barriers);
 
