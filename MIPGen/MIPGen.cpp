@@ -128,12 +128,12 @@ void MIPGen::LoadPipeline(vector<Resource::uptr>& uploaders)
 		m_commandAllocators[m_frameIndex].get(), nullptr), ThrowIfFailed(E_FAIL));
 
 	// Create descriptor table cache.
-	m_descriptorTableCache = DescriptorTableCache::MakeShared(m_device.get(), L"DescriptorTableCache");
+	m_descriptorTableLib = DescriptorTableLib::MakeShared(m_device.get(), L"DescriptorTableLib");
 
 	m_mipGenerator = make_unique<MipGenerator>();
 	if (!m_mipGenerator) ThrowIfFailed(E_FAIL);
 
-	if (!m_mipGenerator->Init(pCommandList, m_descriptorTableCache, uploaders, Format::B8G8R8A8_UNORM,
+	if (!m_mipGenerator->Init(pCommandList, m_descriptorTableLib, uploaders, Format::B8G8R8A8_UNORM,
 		m_fileName.c_str(), m_typedUAV)) ThrowIfFailed(E_FAIL);
 	
 	m_mipGenerator->GetImageSize(m_width, m_height);
@@ -288,8 +288,8 @@ void MIPGen::PopulateCommandList()
 	// Set the descriptor pools
 	const DescriptorPool descriptorPools[] =
 	{
-		m_descriptorTableCache->GetDescriptorPool(CBV_SRV_UAV_POOL),
-		m_descriptorTableCache->GetDescriptorPool(SAMPLER_POOL)
+		m_descriptorTableLib->GetDescriptorPool(CBV_SRV_UAV_POOL),
+		m_descriptorTableLib->GetDescriptorPool(SAMPLER_POOL)
 	};
 	pCommandList->SetDescriptorPools(static_cast<uint32_t>(size(descriptorPools)), descriptorPools);
 

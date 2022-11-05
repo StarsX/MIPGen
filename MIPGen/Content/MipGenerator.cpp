@@ -14,21 +14,21 @@ using namespace XUSG;
 MipGenerator::MipGenerator() :
 	m_imageSize(1, 1)
 {
-	m_shaderPool = ShaderPool::MakeUnique();
+	m_shaderLib = ShaderLib::MakeUnique();
 }
 
 MipGenerator::~MipGenerator()
 {
 }
 
-bool MipGenerator::Init(CommandList* pCommandList, const DescriptorTableCache::sptr& descriptorTableCache,
+bool MipGenerator::Init(CommandList* pCommandList, const DescriptorTableLib::sptr& descriptorTableLib,
 	vector<Resource::uptr>& uploaders, Format rtFormat, const wchar_t* fileName, bool typedUAV)
 {
 	const auto pDevice = pCommandList->GetDevice();
-	m_graphicsPipelineCache = Graphics::PipelineCache::MakeUnique(pDevice);
-	m_computePipelineCache = Compute::PipelineCache::MakeUnique(pDevice);
-	m_pipelineLayoutCache = PipelineLayoutCache::MakeUnique(pDevice);
-	m_descriptorTableCache = descriptorTableCache;
+	m_graphicsPipelineLib = Graphics::PipelineLib::MakeUnique(pDevice);
+	m_computePipelineLib = Compute::PipelineLib::MakeUnique(pDevice);
+	m_pipelineLayoutLib = PipelineLayoutLib::MakeUnique(pDevice);
+	m_descriptorTableLib = descriptorTableLib;
 
 	m_typedUAV = typedUAV;
 
@@ -67,8 +67,8 @@ bool MipGenerator::Init(CommandList* pCommandList, const DescriptorTableCache::s
 		// Set the descriptor pools
 		const DescriptorPool descriptorPools[] =
 		{
-			m_descriptorTableCache->GetDescriptorPool(CBV_SRV_UAV_POOL),
-			m_descriptorTableCache->GetDescriptorPool(SAMPLER_POOL)
+			m_descriptorTableLib->GetDescriptorPool(CBV_SRV_UAV_POOL),
+			m_descriptorTableLib->GetDescriptorPool(SAMPLER_POOL)
 		};
 		pCommandList->SetDescriptorPools(static_cast<uint32_t>(size(descriptorPools)), descriptorPools);
 
@@ -129,7 +129,7 @@ bool MipGenerator::createPipelineLayouts()
 		utilPipelineLayout->SetShaderStage(0, Shader::PS);
 		utilPipelineLayout->SetShaderStage(1, Shader::PS);
 		XUSG_X_RETURN(m_pipelineLayouts[RESAMPLE_GRAPHICS], utilPipelineLayout->GetPipelineLayout(
-			m_pipelineLayoutCache.get(), PipelineLayoutFlag::NONE, L"ResamplingGraphicsLayout"), false);
+			m_pipelineLayoutLib.get(), PipelineLayoutFlag::NONE, L"ResamplingGraphicsLayout"), false);
 	}
 
 	// Resampling compute
@@ -139,17 +139,17 @@ bool MipGenerator::createPipelineLayouts()
 		utilPipelineLayout->SetRange(1, DescriptorType::UAV, 1, 0, 0, DescriptorFlag::DATA_STATIC_WHILE_SET_AT_EXECUTE);
 		utilPipelineLayout->SetRange(2, DescriptorType::SRV, 1, 0);
 		XUSG_X_RETURN(m_pipelineLayouts[RESAMPLE_COMPUTE], utilPipelineLayout->GetPipelineLayout(
-			m_pipelineLayoutCache.get(), PipelineLayoutFlag::NONE, L"ResamplingComputeLayout"), false);
+			m_pipelineLayoutLib.get(), PipelineLayoutFlag::NONE, L"ResamplingComputeLayout"), false);
 	}
 
 	// One-pass MIP-Gen
 	{
 		const auto utilPipelineLayout = Util::PipelineLayout::MakeUnique();
-		utilPipelineLayout->SetConstants(0, XUSG_SizeOfInUint32(uint32_t[2]), 0);
+		utilPipelineLayout->SetConstants(0, XUSG_UINT32_SIZE_OF(uint32_t[2]), 0);
 		utilPipelineLayout->SetRange(1, DescriptorType::UAV, 1, 0, 0, DescriptorFlag::DATA_STATIC_WHILE_SET_AT_EXECUTE);
 		utilPipelineLayout->SetRange(2, DescriptorType::UAV, m_mipmaps->GetNumMips(), 1, 0, DescriptorFlag::DATA_STATIC_WHILE_SET_AT_EXECUTE);
 		XUSG_X_RETURN(m_pipelineLayouts[SINGLE_PASS_MIPGEN], utilPipelineLayout->GetPipelineLayout(
-			m_pipelineLayoutCache.get(), PipelineLayoutFlag::NONE, L"OnePassMIPGenLayout"), false);
+			m_pipelineLayoutLib.get(), PipelineLayoutFlag::NONE, L"OnePassMIPGenLayout"), false);
 	}
 
 	return true;
@@ -162,39 +162,39 @@ bool MipGenerator::createPipelines(Format rtFormat)
 	auto csIndex = 0u;
 
 	// Resampling graphics
-	XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::VS, vsIndex, L"VSScreenQuad.cso"), false);
+	XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::VS, vsIndex, L"VSScreenQuad.cso"), false);
 	{
-		XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::PS, psIndex, L"PSResample.cso"), false);
+		XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::PS, psIndex, L"PSResample.cso"), false);
 
 		const auto state = Graphics::State::MakeUnique();
 		state->SetPipelineLayout(m_pipelineLayouts[RESAMPLE_GRAPHICS]);
-		state->SetShader(Shader::Stage::VS, m_shaderPool->GetShader(Shader::Stage::VS, vsIndex));
-		state->SetShader(Shader::Stage::PS, m_shaderPool->GetShader(Shader::Stage::PS, psIndex++));
-		state->DSSetState(Graphics::DEPTH_STENCIL_NONE, m_graphicsPipelineCache.get());
+		state->SetShader(Shader::Stage::VS, m_shaderLib->GetShader(Shader::Stage::VS, vsIndex));
+		state->SetShader(Shader::Stage::PS, m_shaderLib->GetShader(Shader::Stage::PS, psIndex++));
+		state->DSSetState(Graphics::DEPTH_STENCIL_NONE, m_graphicsPipelineLib.get());
 		state->IASetPrimitiveTopologyType(PrimitiveTopologyType::TRIANGLE);
 		state->OMSetNumRenderTargets(1);
 		state->OMSetRTVFormat(0, rtFormat);
-		XUSG_X_RETURN(m_pipelines[RESAMPLE_GRAPHICS], state->GetPipeline(m_graphicsPipelineCache.get(), L"Resampling_graphics"), false);
+		XUSG_X_RETURN(m_pipelines[RESAMPLE_GRAPHICS], state->GetPipeline(m_graphicsPipelineLib.get(), L"Resampling_graphics"), false);
 	}
 
 	// Resampling compute
 	{
-		XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, L"CSResample.cso"), false);
+		XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, L"CSResample.cso"), false);
 
 		const auto state = Compute::State::MakeUnique();
 		state->SetPipelineLayout(m_pipelineLayouts[RESAMPLE_COMPUTE]);
-		state->SetShader(m_shaderPool->GetShader(Shader::Stage::CS, csIndex++));
-		XUSG_X_RETURN(m_pipelines[RESAMPLE_COMPUTE], state->GetPipeline(m_computePipelineCache.get(), L"Resampling_compute"), false);
+		state->SetShader(m_shaderLib->GetShader(Shader::Stage::CS, csIndex++));
+		XUSG_X_RETURN(m_pipelines[RESAMPLE_COMPUTE], state->GetPipeline(m_computePipelineLib.get(), L"Resampling_compute"), false);
 	}
 
 	// One-pass MIP-Gen
 	{
-		XUSG_N_RETURN(m_shaderPool->CreateShader(Shader::Stage::CS, csIndex, m_typedUAV ? L"CSGenerateMips.cso" : L"CSGenMipsPacked.cso"), false);
+		XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, m_typedUAV ? L"CSGenerateMips.cso" : L"CSGenMipsPacked.cso"), false);
 
 		const auto state = Compute::State::MakeUnique();
 		state->SetPipelineLayout(m_pipelineLayouts[SINGLE_PASS_MIPGEN]);
-		state->SetShader(m_shaderPool->GetShader(Shader::Stage::CS, csIndex++));
-		XUSG_X_RETURN(m_pipelines[SINGLE_PASS_MIPGEN], state->GetPipeline(m_computePipelineCache.get(), L"OnePassMIPGen"), false);
+		state->SetShader(m_shaderLib->GetShader(Shader::Stage::CS, csIndex++));
+		XUSG_X_RETURN(m_pipelines[SINGLE_PASS_MIPGEN], state->GetPipeline(m_computePipelineLib.get(), L"OnePassMIPGen"), false);
 	}
 
 	return true;
@@ -209,7 +209,7 @@ bool MipGenerator::createDescriptorTables()
 		// Get UAV
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 		descriptorTable->SetDescriptors(0, 1, &m_counter->GetUAV());
-		XUSG_X_RETURN(m_uavTable, descriptorTable->GetCbvSrvUavTable(m_descriptorTableCache.get()), false);
+		XUSG_X_RETURN(m_uavTable, descriptorTable->GetCbvSrvUavTable(m_descriptorTableLib.get()), false);
 	}
 
 	// Get UAVs for resampling
@@ -219,7 +219,7 @@ bool MipGenerator::createDescriptorTables()
 		// Get UAV
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 		descriptorTable->SetDescriptors(0, 1, &m_mipmaps->GetUAV(i));
-		XUSG_X_RETURN(m_uavTables[UAV_TABLE_TYPED][i], descriptorTable->GetCbvSrvUavTable(m_descriptorTableCache.get()), false);
+		XUSG_X_RETURN(m_uavTables[UAV_TABLE_TYPED][i], descriptorTable->GetCbvSrvUavTable(m_descriptorTableLib.get()), false);
 	}
 
 	if (!m_typedUAV)
@@ -230,7 +230,7 @@ bool MipGenerator::createDescriptorTables()
 			// Get UAV
 			const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 			descriptorTable->SetDescriptors(0, 1, &m_mipmaps->GetPackedUAV(i));
-			XUSG_X_RETURN(m_uavTables[UAV_TABLE_PACKED][i], descriptorTable->GetCbvSrvUavTable(m_descriptorTableCache.get()), false);
+			XUSG_X_RETURN(m_uavTables[UAV_TABLE_PACKED][i], descriptorTable->GetCbvSrvUavTable(m_descriptorTableLib.get()), false);
 		}
 	}
 
@@ -240,21 +240,21 @@ bool MipGenerator::createDescriptorTables()
 	{
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 		descriptorTable->SetDescriptors(0, 1, &m_mipmaps->GetSRVLevel(i));
-		XUSG_X_RETURN(m_srvTables[i], descriptorTable->GetCbvSrvUavTable(m_descriptorTableCache.get()), false);
+		XUSG_X_RETURN(m_srvTables[i], descriptorTable->GetCbvSrvUavTable(m_descriptorTableLib.get()), false);
 	}
 
 	// Get SRV for source blit
 	{
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 		descriptorTable->SetDescriptors(0, 1, &m_source->GetSRV());
-		XUSG_X_RETURN(m_srvTable, descriptorTable->GetCbvSrvUavTable(m_descriptorTableCache.get()), false);
+		XUSG_X_RETURN(m_srvTable, descriptorTable->GetCbvSrvUavTable(m_descriptorTableLib.get()), false);
 	}
 
 	// Create the sampler table
 	const auto descriptorTable = Util::DescriptorTable::MakeUnique();
 	const auto sampler = LINEAR_CLAMP;
-	descriptorTable->SetSamplers(0, 1, &sampler, m_descriptorTableCache.get());
-	XUSG_X_RETURN(m_samplerTable, descriptorTable->GetSamplerTable(m_descriptorTableCache.get()), false);
+	descriptorTable->SetSamplers(0, 1, &sampler, m_descriptorTableLib.get());
+	XUSG_X_RETURN(m_samplerTable, descriptorTable->GetSamplerTable(m_descriptorTableLib.get()), false);
 
 	return true;
 }
@@ -290,7 +290,7 @@ uint32_t MipGenerator::generateMipsSinglePass(CommandList* pCommandList,
 
 	pCommandList->SetComputePipelineLayout(m_pipelineLayouts[SINGLE_PASS_MIPGEN]);
 	pCommandList->SetCompute32BitConstant(0, m_mipmaps->GetNumMips());
-	pCommandList->SetCompute32BitConstant(0, groupCountX * groupCountY, XUSG_SizeOfInUint32(uint32_t));
+	pCommandList->SetCompute32BitConstant(0, groupCountX * groupCountY, XUSG_UINT32_SIZE_OF(uint32_t));
 	pCommandList->SetComputeDescriptorTable(1, m_uavTable);
 	pCommandList->SetComputeDescriptorTable(2, m_uavTables[m_typedUAV ? UAV_TABLE_TYPED : UAV_TABLE_PACKED][0]);
 

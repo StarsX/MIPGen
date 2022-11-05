@@ -21,7 +21,7 @@ public:
 	MipGenerator();
 	virtual ~MipGenerator();
 
-	bool Init(XUSG::CommandList* pCommandList, const XUSG::DescriptorTableCache::sptr& descriptorTableCache,
+	bool Init(XUSG::CommandList* pCommandList, const XUSG::DescriptorTableLib::sptr& descriptorTableLib,
 		std::vector<XUSG::Resource::uptr>& uploaders, XUSG::Format rtFormat, const wchar_t* fileName, bool typedUAV);
 
 	void Process(XUSG::CommandList* pCommandList, XUSG::ResourceState dstState, PipelineType pipelineType);
@@ -59,11 +59,11 @@ protected:
 	uint32_t generateMipsSinglePass(XUSG::CommandList* pCommandList,
 		XUSG::ResourceBarrier* pBarriers, XUSG::ResourceState dstState);
 
-	XUSG::ShaderPool::uptr				m_shaderPool;
-	XUSG::Graphics::PipelineCache::uptr	m_graphicsPipelineCache;
-	XUSG::Compute::PipelineCache::uptr	m_computePipelineCache;
-	XUSG::PipelineLayoutCache::uptr		m_pipelineLayoutCache;
-	XUSG::DescriptorTableCache::sptr	m_descriptorTableCache;
+	XUSG::ShaderLib::uptr				m_shaderLib;
+	XUSG::Graphics::PipelineLib::uptr	m_graphicsPipelineLib;
+	XUSG::Compute::PipelineLib::uptr	m_computePipelineLib;
+	XUSG::PipelineLayoutLib::uptr		m_pipelineLayoutLib;
+	XUSG::DescriptorTableLib::sptr		m_descriptorTableLib;
 
 	XUSG::PipelineLayout	m_pipelineLayouts[NUM_PIPELINE];
 	XUSG::Pipeline			m_pipelines[NUM_PIPELINE];
