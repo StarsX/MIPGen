@@ -64,13 +64,13 @@ bool MipGenerator::Init(CommandList* pCommandList, const DescriptorTableLib::spt
 	XUSG_N_RETURN(createDescriptorTables(), false);
 
 	{
-		// Set the descriptor pools
-		const DescriptorPool descriptorPools[] =
+		// Set the descriptor heaps
+		const DescriptorHeap descriptorHeaps[] =
 		{
-			m_descriptorTableLib->GetDescriptorPool(CBV_SRV_UAV_POOL),
-			m_descriptorTableLib->GetDescriptorPool(SAMPLER_POOL)
+			m_descriptorTableLib->GetDescriptorHeap(CBV_SRV_UAV_HEAP),
+			m_descriptorTableLib->GetDescriptorHeap(SAMPLER_HEAP)
 		};
-		pCommandList->SetDescriptorPools(static_cast<uint32_t>(size(descriptorPools)), descriptorPools);
+		pCommandList->SetDescriptorHeaps(static_cast<uint32_t>(size(descriptorHeaps)), descriptorHeaps);
 
 		// Auto promotion to UNORDERED_ACCESS
 		m_mipmaps->SetBarrier(m_barriers, ResourceState::UNORDERED_ACCESS);
