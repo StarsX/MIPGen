@@ -25,7 +25,7 @@ public:
 		std::vector<XUSG::Resource::uptr>& uploaders, XUSG::Format rtFormat, const wchar_t* fileName, bool typedUAV);
 
 	void Process(XUSG::CommandList* pCommandList, XUSG::ResourceState dstState, PipelineType pipelineType);
-	void Visualize(XUSG::CommandList* pCommandList, XUSG::RenderTarget::uptr& renderTarget, uint32_t mipLevel);
+	void Visualize(XUSG::CommandList* pCommandList, XUSG::RenderTarget* pRenderTarget, uint32_t mipLevel);
 
 	uint32_t GetMipLevelCount() const;
 	void GetImageSize(uint32_t& width, uint32_t& height) const;

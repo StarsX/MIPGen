@@ -98,13 +98,13 @@ void MipGenerator::Process(CommandList* pCommandList, ResourceState dstState, Pi
 	}
 }
 
-void MipGenerator::Visualize(CommandList* pCommandList, RenderTarget::uptr& renderTarget, uint32_t mipLevel)
+void MipGenerator::Visualize(CommandList* pCommandList, RenderTarget* pRenderTarget, uint32_t mipLevel)
 {
-	m_numBarriers = renderTarget->SetBarrier(m_barriers, ResourceState::RENDER_TARGET, m_numBarriers);
+	m_numBarriers = pRenderTarget->SetBarrier(m_barriers, ResourceState::RENDER_TARGET, m_numBarriers);
 	pCommandList->Barrier(m_numBarriers, m_barriers);
 
 	pCommandList->SetGraphicsPipelineLayout(m_pipelineLayouts[RESAMPLE_GRAPHICS]);
-	renderTarget->Blit(pCommandList, m_srvTables[mipLevel], 1, 0, 0, 0,
+	pRenderTarget->Blit(pCommandList, m_srvTables[mipLevel], 1, 0, 0, 0,
 		m_samplerTable, 0, m_pipelines[RESAMPLE_GRAPHICS]);
 }
 

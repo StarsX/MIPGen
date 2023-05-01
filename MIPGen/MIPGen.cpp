@@ -10,9 +10,12 @@
 //*********************************************************
 
 #include "MIPGen.h"
+#include "stb_image_write.h"
 
 using namespace std;
 using namespace XUSG;
+
+const auto g_backBufferFormat = Format::R8G8B8A8_UNORM;
 
 MIPGen::MIPGen(uint32_t width, uint32_t height, wstring name) :
 	DXFramework(width, height, name),
@@ -98,7 +101,7 @@ void MIPGen::LoadPipeline(vector<Resource::uptr>& uploaders)
 		{
 			// Can assume "all-or-nothing" subset is supported (e.g. R32G32B32A32_FLOAT)
 			// Cannot assume other formats are supported, so we check:
-			D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
+			D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
 			hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatSupport, sizeof(formatSupport));
 			if (SUCCEEDED(hr) && (formatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD))
 				m_typedUAV = true;
@@ -133,7 +136,7 @@ void MIPGen::LoadPipeline(vector<Resource::uptr>& uploaders)
 	m_mipGenerator = make_unique<MipGenerator>();
 	if (!m_mipGenerator) ThrowIfFailed(E_FAIL);
 
-	if (!m_mipGenerator->Init(pCommandList, m_descriptorTableLib, uploaders, Format::B8G8R8A8_UNORM,
+	if (!m_mipGenerator->Init(pCommandList, m_descriptorTableLib, uploaders, g_backBufferFormat,
 		m_fileName.c_str(), m_typedUAV)) ThrowIfFailed(E_FAIL);
 	
 	m_mipGenerator->GetImageSize(m_width, m_height);
@@ -153,7 +156,7 @@ void MIPGen::LoadPipeline(vector<Resource::uptr>& uploaders)
 	// Describe and create the swap chain.
 	m_swapChain = SwapChain::MakeUnique();
 	XUSG_N_RETURN(m_swapChain->Create(factory.get(), Win32Application::GetHwnd(), m_commandQueue->GetHandle(),
-		FrameCount, m_width, m_height, Format::B8G8R8A8_UNORM, SwapChainFlag::ALLOW_TEARING), ThrowIfFailed(E_FAIL));
+		FrameCount, m_width, m_height, g_backBufferFormat, SwapChainFlag::ALLOW_TEARING), ThrowIfFailed(E_FAIL));
 
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
@@ -250,6 +253,9 @@ void MIPGen::OnKeyUp(uint8_t key)
 	case VK_DOWN:
 		m_mipLevel = m_mipLevel > 0 ? m_mipLevel - 1 : 0;
 		break;
+	case VK_F11:
+		m_screenShot = 1;
+		break;
 	case 'P':
 		m_pipelineType = static_cast<MipGenerator::PipelineType>((m_pipelineType + 1) % MipGenerator::NUM_PIPE_TYPE);
 		break;
@@ -293,13 +299,23 @@ void MIPGen::PopulateCommandList()
 	};
 	pCommandList->SetDescriptorHeaps(static_cast<uint32_t>(size(descriptorHeaps)), descriptorHeaps);
 
+	const auto pRenderTarget = m_renderTargets[m_frameIndex].get();
+
 	m_mipGenerator->Process(pCommandList, ResourceState::PIXEL_SHADER_RESOURCE |
 		ResourceState::NON_PIXEL_SHADER_RESOURCE, m_pipelineType);
-	m_mipGenerator->Visualize(pCommandList, m_renderTargets[m_frameIndex], m_mipLevel);
+	m_mipGenerator->Visualize(pCommandList, pRenderTarget, m_mipLevel);
 
 	ResourceBarrier barrier;
-	const auto numBarriers = m_renderTargets[m_frameIndex]->SetBarrier(&barrier, ResourceState::PRESENT);
+	const auto numBarriers = pRenderTarget->SetBarrier(&barrier, ResourceState::PRESENT);
 	pCommandList->Barrier(numBarriers, &barrier);
+
+	// Screen-shot helper
+	if (m_screenShot == 1)
+	{
+		if (!m_readBuffer) m_readBuffer = Buffer::MakeUnique();
+		pRenderTarget->ReadBack(pCommandList, m_readBuffer.get());
+		m_screenShot = 2;
+	}
 
 	XUSG_N_RETURN(pCommandList->Close(), ThrowIfFailed(E_FAIL));
 }
@@ -337,6 +353,37 @@ void MIPGen::MoveToNextFrame()
 
 	// Set the fence value for the next frame.
 	m_fenceValues[m_frameIndex] = currentFenceValue + 1;
+
+	// Screen-shot helper
+	if (m_screenShot)
+	{
+		if (m_screenShot > FrameCount)
+		{
+			char timeStr[15];
+			tm dateTime;
+			const auto now = time(nullptr);
+			if (!localtime_s(&dateTime, &now) && strftime(timeStr, sizeof(timeStr), "%Y%m%d%H%M%S", &dateTime))
+				SaveImage((string("MIPGen_") + timeStr + ".png").c_str(), m_readBuffer.get(), m_width, m_height);
+			m_screenShot = 0;
+		}
+		else ++m_screenShot;
+	}
+}
+
+void MIPGen::SaveImage(char const* fileName, Buffer* imageBuffer, uint32_t w, uint32_t h, uint8_t comp)
+{
+	assert(comp == 3 || comp == 4);
+	const auto pData = static_cast<uint8_t*>(imageBuffer->Map());
+
+	//stbi_write_png_compression_level = 1024;
+	vector<uint8_t> imageData(comp * w * h);
+	for (auto i = 0u; i < w * h; ++i)
+		for (uint8_t j = 0; j < comp; ++j)
+			imageData[comp * i + j] = pData[4 * i + j];
+
+	stbi_write_png(fileName, w, h, comp, imageData.data(), 0);
+
+	m_readBuffer->Unmap();
 }
 
 double MIPGen::CalculateFrameStats(float* pTimeStep)
@@ -376,6 +423,7 @@ double MIPGen::CalculateFrameStats(float* pTimeStep)
 		}
 
 		windowText << L"    [\x2191][\x2193] MIP-level: " << m_mipLevel;
+		windowText << L"    [F11] screen shot";
 
 		SetCustomWindowText(windowText.str().c_str());
 	}
