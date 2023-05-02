@@ -56,6 +56,10 @@ private:
 
 	bool		m_typedUAV;
 
+	// Screen-shot helper
+	XUSG::Buffer::uptr	m_readBuffer;
+	uint32_t			m_rowPitch;
+
 	// User defined
 	uint32_t	m_mipLevel;
 
@@ -64,9 +68,6 @@ private:
 	HANDLE		m_fenceEvent;
 	XUSG::Fence::uptr m_fence;
 	uint64_t	m_fenceValues[FrameCount];
-
-	// Screen-shot helper
-	XUSG::Buffer::uptr m_readBuffer;
 
 	// Application state
 	MipGenerator::PipelineType m_pipelineType;
@@ -86,6 +87,7 @@ private:
 	void PopulateCommandList();
 	void WaitForGpu();
 	void MoveToNextFrame();
-	void SaveImage(char const* fileName, XUSG::Buffer* imageBuffer, uint32_t w, uint32_t h, uint8_t comp = 3);
+	void SaveImage(char const* fileName, XUSG::Buffer* imageBuffer,
+		uint32_t w, uint32_t h, uint32_t rowPitch, uint8_t comp = 3);
 	double CalculateFrameStats(float* fTimeStep = nullptr);
 };
