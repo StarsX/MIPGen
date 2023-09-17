@@ -75,9 +75,9 @@ bool MipGenerator::Init(CommandList* pCommandList, const DescriptorTableLib::spt
 		// Auto promotion to UNORDERED_ACCESS
 		m_mipmaps->SetBarrier(m_barriers, ResourceState::UNORDERED_ACCESS);
 
-		pCommandList->SetComputePipelineLayout(m_pipelineLayouts[RESAMPLE_COMPUTE]);
+		pCommandList->SetComputePipelineLayout(m_pipelineLayouts[BLIT_2D_COMPUTE]);
 		m_mipmaps->AsTexture()->Blit(pCommandList, 8, 8, 1, m_uavTables[UAV_TABLE_TYPED][0], 1,
-			0, m_srvTable, 2, m_samplerTable, 0, m_pipelines[RESAMPLE_COMPUTE]);
+			0, m_srvTable, 2, m_samplerTable, 0, m_pipelines[BLIT_2D_COMPUTE]);
 	}
 
 	return true;
@@ -103,9 +103,9 @@ void MipGenerator::Visualize(CommandList* pCommandList, RenderTarget* pRenderTar
 	m_numBarriers = pRenderTarget->SetBarrier(m_barriers, ResourceState::RENDER_TARGET, m_numBarriers);
 	pCommandList->Barrier(m_numBarriers, m_barriers);
 
-	pCommandList->SetGraphicsPipelineLayout(m_pipelineLayouts[RESAMPLE_GRAPHICS]);
+	pCommandList->SetGraphicsPipelineLayout(m_pipelineLayouts[BLIT_2D_GRAPHICS]);
 	pRenderTarget->Blit(pCommandList, m_srvTables[mipLevel], 1, 0, 0, 0,
-		m_samplerTable, 0, m_pipelines[RESAMPLE_GRAPHICS]);
+		m_samplerTable, 0, m_pipelines[BLIT_2D_GRAPHICS]);
 }
 
 uint32_t MipGenerator::GetMipLevelCount() const
@@ -121,25 +121,25 @@ void MipGenerator::GetImageSize(uint32_t& width, uint32_t& height) const
 
 bool MipGenerator::createPipelineLayouts()
 {
-	// Resampling graphics
+	// Blit 2D graphics
 	{
 		const auto utilPipelineLayout = Util::PipelineLayout::MakeUnique();
 		utilPipelineLayout->SetRange(0, DescriptorType::SAMPLER, 1, 0);
 		utilPipelineLayout->SetRange(1, DescriptorType::SRV, 1, 0);
 		utilPipelineLayout->SetShaderStage(0, Shader::PS);
 		utilPipelineLayout->SetShaderStage(1, Shader::PS);
-		XUSG_X_RETURN(m_pipelineLayouts[RESAMPLE_GRAPHICS], utilPipelineLayout->GetPipelineLayout(
-			m_pipelineLayoutLib.get(), PipelineLayoutFlag::NONE, L"ResamplingGraphicsLayout"), false);
+		XUSG_X_RETURN(m_pipelineLayouts[BLIT_2D_GRAPHICS], utilPipelineLayout->GetPipelineLayout(
+			m_pipelineLayoutLib.get(), PipelineLayoutFlag::NONE, L"Blit3DGraphicsLayout"), false);
 	}
 
-	// Resampling compute
+	// Blit 2D compute
 	{
 		const auto utilPipelineLayout = Util::PipelineLayout::MakeUnique();
 		utilPipelineLayout->SetRange(0, DescriptorType::SAMPLER, 1, 0);
 		utilPipelineLayout->SetRange(1, DescriptorType::UAV, 1, 0, 0, DescriptorFlag::DATA_STATIC_WHILE_SET_AT_EXECUTE);
 		utilPipelineLayout->SetRange(2, DescriptorType::SRV, 1, 0);
-		XUSG_X_RETURN(m_pipelineLayouts[RESAMPLE_COMPUTE], utilPipelineLayout->GetPipelineLayout(
-			m_pipelineLayoutLib.get(), PipelineLayoutFlag::NONE, L"ResamplingComputeLayout"), false);
+		XUSG_X_RETURN(m_pipelineLayouts[BLIT_2D_COMPUTE], utilPipelineLayout->GetPipelineLayout(
+			m_pipelineLayoutLib.get(), PipelineLayoutFlag::NONE, L"Blit3DComputeLayout"), false);
 	}
 
 	// One-pass MIP-Gen
@@ -161,30 +161,30 @@ bool MipGenerator::createPipelines(Format rtFormat)
 	auto psIndex = 0u;
 	auto csIndex = 0u;
 
-	// Resampling graphics
+	// Blit 2D graphics
 	XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::VS, vsIndex, L"VSScreenQuad.cso"), false);
 	{
-		XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::PS, psIndex, L"PSResample.cso"), false);
+		XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::PS, psIndex, L"PSBlit2D.cso"), false);
 
 		const auto state = Graphics::State::MakeUnique();
-		state->SetPipelineLayout(m_pipelineLayouts[RESAMPLE_GRAPHICS]);
+		state->SetPipelineLayout(m_pipelineLayouts[BLIT_2D_GRAPHICS]);
 		state->SetShader(Shader::Stage::VS, m_shaderLib->GetShader(Shader::Stage::VS, vsIndex));
 		state->SetShader(Shader::Stage::PS, m_shaderLib->GetShader(Shader::Stage::PS, psIndex++));
 		state->DSSetState(Graphics::DEPTH_STENCIL_NONE, m_graphicsPipelineLib.get());
 		state->IASetPrimitiveTopologyType(PrimitiveTopologyType::TRIANGLE);
 		state->OMSetNumRenderTargets(1);
 		state->OMSetRTVFormat(0, rtFormat);
-		XUSG_X_RETURN(m_pipelines[RESAMPLE_GRAPHICS], state->GetPipeline(m_graphicsPipelineLib.get(), L"Resampling_graphics"), false);
+		XUSG_X_RETURN(m_pipelines[BLIT_2D_GRAPHICS], state->GetPipeline(m_graphicsPipelineLib.get(), L"Blit2D_graphics"), false);
 	}
 
-	// Resampling compute
+	// Blit 2D compute
 	{
-		XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, L"CSResample.cso"), false);
+		XUSG_N_RETURN(m_shaderLib->CreateShader(Shader::Stage::CS, csIndex, L"CSBlit2D.cso"), false);
 
 		const auto state = Compute::State::MakeUnique();
-		state->SetPipelineLayout(m_pipelineLayouts[RESAMPLE_COMPUTE]);
+		state->SetPipelineLayout(m_pipelineLayouts[BLIT_2D_COMPUTE]);
 		state->SetShader(m_shaderLib->GetShader(Shader::Stage::CS, csIndex++));
-		XUSG_X_RETURN(m_pipelines[RESAMPLE_COMPUTE], state->GetPipeline(m_computePipelineLib.get(), L"Resampling_compute"), false);
+		XUSG_X_RETURN(m_pipelines[BLIT_2D_COMPUTE], state->GetPipeline(m_computePipelineLib.get(), L"Blit2D_compute"), false);
 	}
 
 	// One-pass MIP-Gen
@@ -264,8 +264,8 @@ uint32_t MipGenerator::generateMipsGraphics(CommandList* pCommandList,
 {
 	// Generate mipmaps
 	return m_mipmaps->GenerateMips(pCommandList, pBarriers, ResourceState::PIXEL_SHADER_RESOURCE |
-		ResourceState::NON_PIXEL_SHADER_RESOURCE, m_pipelineLayouts[RESAMPLE_GRAPHICS],
-		m_pipelines[RESAMPLE_GRAPHICS], m_srvTables.data(), 1, m_samplerTable, 0);
+		ResourceState::NON_PIXEL_SHADER_RESOURCE, m_pipelineLayouts[BLIT_2D_GRAPHICS],
+		m_pipelines[BLIT_2D_GRAPHICS], m_srvTables.data(), 1, m_samplerTable, 0);
 }
 
 uint32_t MipGenerator::generateMipsCompute(CommandList* pCommandList,
@@ -274,7 +274,7 @@ uint32_t MipGenerator::generateMipsCompute(CommandList* pCommandList,
 	// Generate mipmaps
 	return m_mipmaps->AsTexture()->GenerateMips(pCommandList, pBarriers, 8, 8, 1,
 		ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::NON_PIXEL_SHADER_RESOURCE,
-		m_pipelineLayouts[RESAMPLE_COMPUTE], m_pipelines[RESAMPLE_COMPUTE],
+		m_pipelineLayouts[BLIT_2D_COMPUTE], m_pipelines[BLIT_2D_COMPUTE],
 		&m_uavTables[UAV_TABLE_TYPED][1], 1, m_samplerTable, 0, 0, &m_srvTables[0], 2);
 }
 

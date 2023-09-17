@@ -33,8 +33,8 @@ public:
 protected:
 	enum PipelineIndex : uint8_t
 	{
-		RESAMPLE_GRAPHICS,
-		RESAMPLE_COMPUTE,
+		BLIT_2D_GRAPHICS,
+		BLIT_2D_COMPUTE,
 		SINGLE_PASS_MIPGEN,
 
 		NUM_PIPELINE
