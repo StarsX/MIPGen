@@ -45,7 +45,6 @@ bool MipGenerator::Init(CommandList* pCommandList, const DescriptorTableLib::spt
 	// Create resources and pipelines
 	m_imageSize.x = static_cast<uint32_t>(m_source->GetWidth());
 	m_imageSize.y = m_source->GetHeight();
-	const uint8_t numMips = CalculateMipLevels(m_imageSize.x, m_imageSize.y);
 
 	m_counter = TypedBuffer::MakeUnique();
 	XUSG_N_RETURN(m_counter->Create(pDevice, 1, sizeof(uint32_t), Format::R32_UINT,
@@ -53,11 +52,13 @@ bool MipGenerator::Init(CommandList* pCommandList, const DescriptorTableLib::spt
 		MemoryType::DEFAULT, 0, nullptr, 1, nullptr, MemoryFlag::NONE,
 		L"GlobalBarrierCounter"), false);
 
+	const auto numUavFormats = typedUAV ? 0u : 1u;
+	const auto uavFormat = Format::R32_UINT;
 	m_mipmaps = RenderTarget::MakeUnique();
-	XUSG_N_RETURN(m_mipmaps->Create(pDevice, m_imageSize.x, m_imageSize.y, rtFormat, 1, (typedUAV ?
-		ResourceFlag::ALLOW_UNORDERED_ACCESS : ResourceFlag::NEED_PACKED_UAV ) |
-		ResourceFlag::ALLOW_SIMULTANEOUS_ACCESS, numMips, 1, nullptr, false,
-		MemoryFlag::NONE, L"MipMap"), false);
+	XUSG_N_RETURN(m_mipmaps->Create(pDevice, m_imageSize.x, m_imageSize.y, rtFormat, 1,
+		ResourceFlag::ALLOW_UNORDERED_ACCESS | ResourceFlag::ALLOW_SIMULTANEOUS_ACCESS,
+		0, 1, nullptr, false, MemoryFlag::NONE, L"MipMap", XUSG_DEFAULT_SRV_COMPONENT_MAPPING,
+		TextureLayout::UNKNOWN, numUavFormats, typedUAV ? nullptr : &uavFormat), false);
 
 	XUSG_N_RETURN(createPipelineLayouts(), false);
 	XUSG_N_RETURN(createPipelines(rtFormat), false);
@@ -76,7 +77,7 @@ bool MipGenerator::Init(CommandList* pCommandList, const DescriptorTableLib::spt
 		m_mipmaps->SetBarrier(m_barriers, ResourceState::UNORDERED_ACCESS);
 
 		pCommandList->SetComputePipelineLayout(m_pipelineLayouts[BLIT_2D_COMPUTE]);
-		m_mipmaps->AsTexture()->Blit(pCommandList, 8, 8, 1, m_uavTables[UAV_TABLE_TYPED][0], 1,
+		m_mipmaps->Blit(pCommandList, 8, 8, 1, m_uavTables[UAV_TABLE_TYPED][0], 1,
 			0, m_srvTable, 2, m_samplerTable, 0, m_pipelines[BLIT_2D_COMPUTE]);
 	}
 
@@ -229,7 +230,7 @@ bool MipGenerator::createDescriptorTables()
 		{
 			// Get UAV
 			const auto descriptorTable = Util::DescriptorTable::MakeUnique();
-			descriptorTable->SetDescriptors(0, 1, &m_mipmaps->GetPackedUAV(i));
+			descriptorTable->SetDescriptors(0, 1, &m_mipmaps->GetUAV(i, Format::R32_UINT));
 			XUSG_X_RETURN(m_uavTables[UAV_TABLE_PACKED][i], descriptorTable->GetCbvSrvUavTable(m_descriptorTableLib.get()), false);
 		}
 	}
@@ -239,7 +240,7 @@ bool MipGenerator::createDescriptorTables()
 	for (uint8_t i = 0; i < numMips; ++i)
 	{
 		const auto descriptorTable = Util::DescriptorTable::MakeUnique();
-		descriptorTable->SetDescriptors(0, 1, &m_mipmaps->GetSRVLevel(i));
+		descriptorTable->SetDescriptors(0, 1, &m_mipmaps->GetSRV(i, true));
 		XUSG_X_RETURN(m_srvTables[i], descriptorTable->GetCbvSrvUavTable(m_descriptorTableLib.get()), false);
 	}
 
@@ -272,7 +273,7 @@ uint32_t MipGenerator::generateMipsCompute(CommandList* pCommandList,
 	ResourceBarrier* pBarriers, ResourceState dstState)
 {
 	// Generate mipmaps
-	return m_mipmaps->AsTexture()->GenerateMips(pCommandList, pBarriers, 8, 8, 1,
+	return m_mipmaps->GenerateMips(pCommandList, pBarriers, 8, 8, 1,
 		ResourceState::PIXEL_SHADER_RESOURCE | ResourceState::NON_PIXEL_SHADER_RESOURCE,
 		m_pipelineLayouts[BLIT_2D_COMPUTE], m_pipelines[BLIT_2D_COMPUTE],
 		&m_uavTables[UAV_TABLE_TYPED][1], 1, m_samplerTable, 0, 0, &m_srvTables[0], 2);

@@ -90,7 +90,8 @@
 
 COPY /Y "$(OutDir)*.exe" "$(ProjectDir)..\Bin\"
 
-COPY /Y "$(ProjectDir)XUSG\Bin\$(Configuration)\*.dll" "$(ProjectDir)..\Bin\"</Command>
+COPY /Y "$(ProjectDir)XUSG\Bin\$(Configuration)\*.dll" "$(ProjectDir)..\Bin\"
+COPY /Y "$(ProjectDir)dxc\$(Platform)\*.dll" "$(ProjectDir)..\Bin\"</Command>
     </PostBuildEvent>
     <FxCompile>
       <ShaderModel>6.0</ShaderModel>
@@ -119,7 +120,8 @@ COPY /Y "$(ProjectDir)XUSG\Bin\$(Configuration)\*.dll" "$(ProjectDir)..\Bin\"</C
 
 COPY /Y "$(OutDir)*.exe" "$(ProjectDir)..\Bin\"
 
-COPY /Y "$(ProjectDir)XUSG\Bin\$(Platform)\$(Configuration)\*.dll" "$(ProjectDir)..\Bin\"</Command>
+COPY /Y "$(ProjectDir)XUSG\Bin\$(Platform)\$(Configuration)\*.dll" "$(ProjectDir)..\Bin\"
+COPY /Y "$(ProjectDir)dxc\$(Platform)\*.dll" "$(ProjectDir)..\Bin\"</Command>
     </PostBuildEvent>
     <FxCompile>
       <ShaderModel>6.0</ShaderModel>
@@ -152,7 +154,8 @@ COPY /Y "$(ProjectDir)XUSG\Bin\$(Platform)\$(Configuration)\*.dll" "$(ProjectDir
 
 COPY /Y "$(OutDir)*.exe" "$(ProjectDir)..\Bin\"
 
-COPY /Y "$(ProjectDir)XUSG\Bin\$(Configuration)\*.dll" "$(ProjectDir)..\Bin\"</Command>
+COPY /Y "$(ProjectDir)XUSG\Bin\$(Configuration)\*.dll" "$(ProjectDir)..\Bin\"
+COPY /Y "$(ProjectDir)dxc\$(Platform)\*.dll" "$(ProjectDir)..\Bin\"</Command>
     </PostBuildEvent>
     <FxCompile>
       <ShaderModel>6.0</ShaderModel>
@@ -185,7 +188,8 @@ COPY /Y "$(ProjectDir)XUSG\Bin\$(Configuration)\*.dll" "$(ProjectDir)..\Bin\"</C
 
 COPY /Y "$(OutDir)*.exe" "$(ProjectDir)..\Bin\"
 
-COPY /Y "$(ProjectDir)XUSG\Bin\$(Platform)\$(Configuration)\*.dll" "$(ProjectDir)..\Bin\"</Command>
+COPY /Y "$(ProjectDir)XUSG\Bin\$(Platform)\$(Configuration)\*.dll" "$(ProjectDir)..\Bin\"
+COPY /Y "$(ProjectDir)dxc\$(Platform)\*.dll" "$(ProjectDir)..\Bin\"</Command>
     </PostBuildEvent>
     <FxCompile>
       <ShaderModel>6.0</ShaderModel>
