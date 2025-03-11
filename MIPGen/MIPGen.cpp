@@ -25,7 +25,7 @@ MIPGen::MIPGen(uint32_t width, uint32_t height, wstring name) :
 	m_deviceType(DEVICE_DISCRETE),
 	m_pipelineType(MipGenerator::SINGLE_PASS),
 	m_showFPS(true),
-	m_fileName(L"Assets/Sashimi.dds"),
+	m_fileName("Assets/Sashimi.png"),
 	m_screenShot(0)
 {
 #if defined (_DEBUG)
@@ -323,7 +323,12 @@ void MIPGen::ParseCommandLineArgs(wchar_t* argv[], int argc)
 		else if (isArgMatched(i, L"uma")) m_deviceType = DEVICE_UMA;
 		else if (isArgMatched(i, L"i") || isArgMatched(i, L"image"))
 		{
-			if (hasNextArgValue(i)) m_fileName = argv[++i];
+			if (hasNextArgValue(i))
+			{
+				m_fileName.resize(wcslen(argv[++i]));
+				for (size_t j = 0; j < m_fileName.size(); ++j)
+					m_fileName[j] = static_cast<char>(argv[i][j]);
+			}
 		}
 	}
 }

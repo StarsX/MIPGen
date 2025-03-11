@@ -3,9 +3,9 @@
 //--------------------------------------------------------------------------------------
 
 #include "MipGenerator.h"
-#define _INDEPENDENT_DDS_LOADER_
-#include "Advanced/XUSGDDSLoader.h"
-#undef _INDEPENDENT_DDS_LOADER_
+
+#define _ENABLE_STB_IMAGE_LOADER_ONLY_
+#include "Advanced/XUSGTextureLoader.h"
 
 using namespace std;
 using namespace DirectX;
@@ -22,7 +22,7 @@ MipGenerator::~MipGenerator()
 }
 
 bool MipGenerator::Init(CommandList* pCommandList, const DescriptorTableLib::sptr& descriptorTableLib,
-	vector<Resource::uptr>& uploaders, Format rtFormat, const wchar_t* fileName, bool typedUAV)
+	vector<Resource::uptr>& uploaders, Format rtFormat, const char* fileName, bool typedUAV)
 {
 	const auto pDevice = pCommandList->GetDevice();
 	m_graphicsPipelineLib = Graphics::PipelineLib::MakeUnique(pDevice);
@@ -33,14 +33,10 @@ bool MipGenerator::Init(CommandList* pCommandList, const DescriptorTableLib::spt
 	m_typedUAV = typedUAV;
 
 	// Load input image
-	{
-		DDS::Loader textureLoader;
-		DDS::AlphaMode alphaMode;
-
-		uploaders.emplace_back(Resource::MakeUnique());
-		XUSG_N_RETURN(textureLoader.CreateTextureFromFile(pCommandList, fileName,
-			8192, false, m_source, uploaders.back().get(), &alphaMode), false);
-	}
+	m_source = Texture::MakeUnique();
+	uploaders.emplace_back(Resource::MakeUnique());
+	XUSG_N_RETURN(CreateTextureFromFile(pCommandList, fileName, m_source.get(),
+		uploaders.back().get(), ResourceState::COMMON, MemoryFlag::NONE, L"Source"), false);
 
 	// Create resources and pipelines
 	m_imageSize.x = static_cast<uint32_t>(m_source->GetWidth());

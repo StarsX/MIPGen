@@ -1,1 +1,1 @@
-start MIPGen.exe -image Assets/Me.dds
+start MIPGen.exe -i Assets/Me.png

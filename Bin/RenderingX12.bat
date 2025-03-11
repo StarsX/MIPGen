@@ -1,1 +1,1 @@
-start MIPGen.exe -image Assets/RenderingX12.dds
+start MIPGen.exe -i Assets/RenderingX12.png

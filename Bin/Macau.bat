@@ -1,1 +1,1 @@
-start MIPGen.exe -image Assets/Macau.dds
+start MIPGen.exe -i Assets/Macau.png

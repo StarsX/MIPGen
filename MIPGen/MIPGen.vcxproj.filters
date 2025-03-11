@@ -28,12 +28,6 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{c6cbf730-3a04-4e8f-9fa2-94d7d2145f9b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="XUSG\Core">
-      <UniqueIdentifier>{93b2fd6a-d8de-4bdf-8acb-1cb7bf5288de}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="XUSG\Advanced">
-      <UniqueIdentifier>{b41a6e61-743f-423b-9582-d5c89d629022}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\DXFramework.h">
@@ -51,9 +45,6 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="XUSG\Advanced\XUSGDDSLoader.h">
-      <Filter>XUSG\Advanced</Filter>
-    </ClInclude>
     <ClInclude Include="Content\MipGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -63,9 +54,6 @@
     <ClInclude Include="Common\d3d12.h">
       <Filter>Common\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="XUSG\Core\XUSG.h">
-      <Filter>XUSG\Core</Filter>
-    </ClInclude>
     <ClInclude Include="Common\d3dcommon.h">
       <Filter>Common\Header Files</Filter>
     </ClInclude>
@@ -74,6 +62,15 @@
     </ClInclude>
     <ClInclude Include="Common\stb_image_write.h">
       <Filter>Common\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XUSG\Core\XUSG.h">
+      <Filter>XUSG</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\stb_image.h">
+      <Filter>Common\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XUSG\Advanced\XUSGTextureLoader.h">
+      <Filter>XUSG</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -96,6 +93,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Common\stb_image_write.cpp">
+      <Filter>Common\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\stb_image.cpp">
       <Filter>Common\Source Files</Filter>
     </ClCompile>
   </ItemGroup>

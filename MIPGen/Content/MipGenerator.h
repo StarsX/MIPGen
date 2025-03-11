@@ -22,7 +22,7 @@ public:
 	virtual ~MipGenerator();
 
 	bool Init(XUSG::CommandList* pCommandList, const XUSG::DescriptorTableLib::sptr& descriptorTableLib,
-		std::vector<XUSG::Resource::uptr>& uploaders, XUSG::Format rtFormat, const wchar_t* fileName, bool typedUAV);
+		std::vector<XUSG::Resource::uptr>& uploaders, XUSG::Format rtFormat, const char* fileName, bool typedUAV);
 
 	void Process(XUSG::CommandList* pCommandList, XUSG::ResourceState dstState, PipelineType pipelineType);
 	void Visualize(XUSG::CommandList* pCommandList, XUSG::RenderTarget* pRenderTarget, uint32_t mipLevel);
@@ -74,7 +74,7 @@ protected:
 	XUSG::DescriptorTable				m_srvTable;
 	XUSG::DescriptorTable				m_samplerTable;
 
-	XUSG::Texture::sptr					m_source;
+	XUSG::Texture::uptr					m_source;
 	XUSG::TypedBuffer::uptr				m_counter;
 	XUSG::RenderTarget::uptr			m_mipmaps;
 
